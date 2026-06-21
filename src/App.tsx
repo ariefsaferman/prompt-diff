@@ -1,5 +1,4 @@
 ﻿import { useState } from 'react';
-import { diffLines } from 'diff';
 import { KeyRound, Zap, Scale, LoaderCircle, Settings2, HelpCircle } from 'lucide-react';
 
 interface Variable {
@@ -17,8 +16,7 @@ export default function App() {
   const [outputA, setOutputA] = useState('');
   const [outputB, setOutputB] = useState('');
   const [loading, setLoading] = useState(false);
-  const [modelName, setModelName] = useState('');
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [modelName] = useState('');
   const [modelNotice, setModelNotice] = useState('');
   const [showSettings, setShowSettings] = useState(false);
 
@@ -45,8 +43,6 @@ export default function App() {
       }
 
       const models = Array.isArray(listData.models) ? listData.models : [];
-      const modelNames = models.map((m: any) => m.name).filter(Boolean);
-      setAvailableModels(modelNames);
 
       const supportedModels = models.filter((m: any) => {
         const actions = [
@@ -107,9 +103,6 @@ export default function App() {
       setLoading(false);
     }
   };
-
-  // Compute text differences between Prompt Inputs
-  const promptDifferences = diffLines(promptA, promptB);
 
   return (
     <div className="flex flex-col h-screen dark bg-slate-950 text-slate-100 selection:bg-slate-700">
