@@ -17,57 +17,28 @@ If you are developing a production application, we recommend updating the config
 
 ```js
 export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+  # PromptDiff
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+  What it is and how to run it
+  - A tiny React+Vite tool to compare two prompt versions (A/B) against a test variable and preview model outputs. Run locally:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+  ```bash
+  npm install
+  npm run dev
+  ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+  Who it's for and the one job it must do well
+  - For prompt engineers and writers who want a fast, repeatable A/B prompt comparison. One job: reliably show human-readable model responses for two prompts using the same input.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+  Why this problem, and why it's worth solving
+  - Small prompt changes can dramatically change LLM output quality. PromptDiff makes those differences obvious and repeatable so you can iterate faster and safer.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+  What's already out there and why this exists
+  - There are generic playgrounds and experiment UIs from LLM vendors; this project focuses only on side-by-side prompt comparison with a variable bench — simple, local, and workflow-focused.
+
+  Scope: what I included and what I left out
+  - In scope: editing two prompts, substituting a single test variable, running both prompts against a model, and showing outputs.\
+  - Out of scope: production-grade orchestration, multi-input datasets, result analytics, and secure hosted key management.
+
+
+
