@@ -1,44 +1,31 @@
-# React + TypeScript + Vite
+# PromptDiff
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+PromptDiff is an intentional, zero-database developer workspace designed for rapid LLM prompt engineering and qualitative evaluation.
 
-Currently, two official plugins are available:
+When building AI features, tweaking system instructions—even changing a single word or shifting a tone constraint can drastically alter the model's output behavior, consistency, and structural adherence. Tracking these shifts in your head or shuffling text files back and forth is incredibly friction-heavy.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Live demo:** [prompt-diff.netlify.app](https://prompt-diff.netlify.app/)
 
-## React Compiler
+## Why
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Small wording changes can swing LLM output quality a lot, and it's easy to lose track of which version actually worked better. PromptDiff runs prompt A and prompt B against one variable and shows the outputs next to each other, so the difference is obvious instead of something you have to remember.
 
-## Expanding the ESLint configuration
+## What it does
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Edit two prompts (A/B)
+- Plug in a single test variable
+- Run both against the model
+- Compare the outputs side by side
 
-```js
-export default defineConfig([
-  # PromptDiff
+It's intentionally narrow, no dataset support, no analytics, no hosted key management. Just a fast local loop for "does this prompt change actually help."
 
-  What it is and how to run it
-  - A tiny React+Vite tool to compare two prompt versions (A/B) against a test variable and preview model outputs. Run locally:
+## Running it
 
-  ```bash
-  npm install
-  npm run dev
-  ```
+```bash
+npm install
+npm run dev
+```
 
-  Who it's for and the one job it must do well
-  - For prompt engineers and writers who want a fast, repeatable A/B prompt comparison. One job: reliably show human-readable model responses for two prompts using the same input.
+## Stack
 
-  Why this problem, and why it's worth solving
-  - Small prompt changes can dramatically change LLM output quality. PromptDiff makes those differences obvious and repeatable so you can iterate faster and safer.
-
-  What's already out there and why this exists
-  - There are generic playgrounds and experiment UIs from LLM vendors; this project focuses only on side-by-side prompt comparison with a variable bench — simple, local, and workflow-focused.
-
-  Scope: what I included and what I left out
-  - In scope: editing two prompts, substituting a single test variable, running both prompts against a model, and showing outputs.\
-  - Out of scope: production-grade orchestration, multi-input datasets, result analytics, and secure hosted key management.
-
-
-
+React + TypeScript + Vite.
