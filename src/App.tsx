@@ -1,5 +1,7 @@
 ﻿import { useState, useEffect } from "react";
 import { KeyRound, Zap, LoaderCircle } from "lucide-react";
+import Alert from 'react-bootstrap/Alert';
+
 
 interface Variable {
   key: string;
@@ -142,10 +144,11 @@ export default function App() {
         return `API Error: ${data.error?.message || response.statusText}`;
       }
 
-      return (
-        data.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "Error: Generation failed."
-      );
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (typeof rawText === "string" && rawText.includes("Error")) {
+        return "ERROR_RESPONSE";
+      }
+      return rawText || "ERROR_RESPONSE";
     };
 
     try {
@@ -153,8 +156,8 @@ export default function App() {
         fetchLLM(finalA),
         fetchLLM(finalB),
       ]);
-      setOutputA(resA);
-      setOutputB(resB);
+      setOutputA(resA === "ERROR_RESPONSE" ? "" : resA);
+      setOutputB(resB === "ERROR_RESPONSE" ? "" : resB);
     } catch (err) {
       console.error(err);
     } finally {
@@ -162,8 +165,23 @@ export default function App() {
     }
   };
 
+
+  const isErrorOutput = (text: string) => /error/i.test(text);
+  const displayOutputA = outputA && !isErrorOutput(outputA) ? outputA : "";
+  const displayOutputB = outputB && !isErrorOutput(outputB) ? outputB : "";
+
   return (
     <div className="flex flex-col h-screen dark bg-slate-950 text-slate-100 selection:bg-slate-700">
+      <style>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
       {/* Header Bar */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-slate-800 bg-slate-950/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center gap-3">
@@ -313,13 +331,18 @@ export default function App() {
                 {"}"}
               </span>
             </div>
-            <input
-              type="text"
+
+            <div className="flex items-center gap-2" style={{ marginTop: "15px" }}>
+              <span> Write your prompt here </span>
+            </div>
+            <textarea
               value={variable.value}
               onChange={(e) =>
                 setVariable({ ...variable, value: e.target.value })
               }
-              className="flex-1 bg-transparent border-b border-slate-700 px-4 py-1 text-base text-slate-300 placeholder:text-slate-700"
+              rows={4}
+              style={{width: '550px'}}
+              className="flex-1 bg-transparent border border-slate-700 rounded-lg px-4 py-2 text-base text-slate-300 placeholder:text-slate-700 resize-none"
               placeholder="Paste dynamic test value for substitution..."
             />
           </div>
@@ -327,56 +350,63 @@ export default function App() {
             <div className="text-sm text-slate-300 mt-2">{modelNotice}</div>
           )}
 
-          <button
+              <button
             onClick={runEvaluation}
             disabled={loading}
-            className="w-full h-14 bg-indigo-600 hover:bg-indigo-500 font-semibold text-lg text-white rounded-xl disabled:opacity-50 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+            style={{backgroundColor: "green", border: "none"}}
+            className="w-full h-14 bg-indigo-600 hover:bg-indigo-500 font-semibold text-lg text-white rounded-xl disabled:opacity-50 transition-all flex items-center justify-center gap-3 active:scale-[0.98] whitespace-nowrap"
           >
             {loading ? (
               <>
-                <LoaderCircle className="size-6 animate-spin text-indigo-200" />
-                Executing Side-by-Side Evals...
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <LoaderCircle className="size-6 text-indigo-200" style={{ animation: "spin 1s linear infinite" }} />
+                <span>
+                  Loading Response...
+                </span>
+              </div>
               </>
             ) : (
-              <>
-                <Zap className="size-6 text-amber-400" />
-                Run Side-by-Side Comparison (Active Key)
-              </>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Zap className="size-6 text-yellow-400" fill="yellow"/>
+                <span>Run Evaluation</span>
+              </div>
             )}
           </button>
+          {isErrorOutput(outputA)  && (
+            <Alert  variant={'danger'} style={{backgroundColor: "red"}}>
+          User request exceeded limit. Please try again later.
+        </Alert>
+          )}
         </div>
       </footer>
 
       {/* Evaluation Output Section (Only shown after generation) */}
-      {(outputA || outputB) && (
-        <div className="border-t border-slate-800 bg-slate-900 min-h-[35vh]">
-          <div className="flex h-full">
-            {/* Output Panel A */}
-            <div className="w-1/2 border-r border-slate-800 flex flex-col">
-              <div className="px-6 py-2 border-b border-slate-800 text-xs font-medium text-slate-500 uppercase tracking-wider">
+      {!isErrorOutput(outputA) && outputA.length > 0? (
+        <div className="border-t border-slate-800 bg-slate-900 min-h-[35vh] p-4">
+          <div style={{display: "flex", justifyContent: "space-around"}}>
+            <div className="flex flex-col rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden">
+              <div className="px-6 py-3 border-b border-slate-800 text-xs font-medium text-slate-500 uppercase tracking-wider">
                 Output A
               </div>
-              <div className="flex-1 w-full bg-slate-950 p-6 text-base font-sans whitespace-pre-wrap leading-relaxed text-slate-200 selection:bg-slate-700">
-                {outputA || (
+              <div className="flex-1 w-full p-6 text-base font-sans whitespace-pre-wrap leading-relaxed text-slate-200 selection:bg-slate-700">
+                {displayOutputA || (
                   <span className="text-slate-700 font-mono">Running...</span>
                 )}
               </div>
             </div>
-
-            {/* Output Panel B (Highlights Diff vs Output A automatically if styled) */}
-            <div className="w-1/2 flex flex-col bg-slate-950">
-              <div className="px-6 py-2 border-b border-slate-800 text-xs font-medium text-slate-500 uppercase tracking-wider">
+            <div className="flex flex-col rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden">
+              <div className="px-6 py-3 border-b border-slate-800 text-xs font-medium text-slate-500 uppercase tracking-wider">
                 Output B
               </div>
-              <div className="flex-1 w-full bg-slate-950 p-6 text-base font-sans whitespace-pre-wrap leading-relaxed text-slate-200 selection:bg-slate-700">
-                {outputB || (
+              <div className="flex-1 w-full p-6 text-base font-sans whitespace-pre-wrap leading-relaxed text-slate-200 selection:bg-slate-700">
+                {displayOutputB || (
                   <span className="text-slate-700 font-mono">Running...</span>
                 )}
               </div>
             </div>
           </div>
         </div>
-      )}
+      ) : <></>}
 
       {/* Spacer so the floating footer doesn't overlap text when output appears */}
       {(outputA || outputB) && <div className="h-[200px]"></div>}
