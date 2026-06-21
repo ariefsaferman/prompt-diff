@@ -1,5 +1,5 @@
-﻿import { useState } from 'react';
-import { KeyRound, Zap, Scale, LoaderCircle, Settings2, HelpCircle } from 'lucide-react';
+﻿import { useState, useEffect } from 'react';
+import { KeyRound, Zap, LoaderCircle } from 'lucide-react';
 
 interface Variable {
   key: string;
@@ -18,12 +18,36 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [modelName] = useState('');
   const [modelNotice, setModelNotice] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
+  const [editingKey, setEditingKey] = useState(false);
+  const [tempKey, setTempKey] = useState('');
 
   // Helper to inject user variables into raw prompts
   const injectVariables = (rawPrompt: string, v: Variable) => {
     const regex = new RegExp(`{{${v.key}}}`, 'g');
     return rawPrompt.replace(regex, v.value);
+  };
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('gemini_api_key') || '';
+      if (saved) setApiKey(saved);
+    } catch (e) {
+      // ignore localStorage errors in restricted environments
+    }
+  }, []);
+
+  const saveApiKey = () => {
+    if (!tempKey) return alert('Please paste your Gemini API key.');
+    setApiKey(tempKey);
+    try {
+      localStorage.setItem('gemini_api_key', tempKey);
+    } catch (e) {
+      // ignore
+    }
+    setEditingKey(false);
+    setTempKey('');
+    setModelNotice('API key saved');
+    setTimeout(() => setModelNotice(''), 3000);
   };
 
   const runEvaluation = async () => {
@@ -110,41 +134,66 @@ export default function App() {
       {/* Header Bar */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-slate-800 bg-slate-950/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center gap-3">
-          <Scale className="size-7 text-indigo-500" />
+          {/* <Scale className="size-7 text-indigo-500" /> */}
           <h1 className="text-xl font-bold tracking-tight">Prompt<span className="text-indigo-400">Diff</span></h1>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowSettings(!showSettings)} className="text-slate-500 hover:text-white p-2">
+          {/* <button onClick={() => setShowSettings(!showSettings)} className="text-slate-500 hover:text-white p-2">
             <Settings2 className="size-5" />
-          </button>
-          <button className="text-slate-500 hover:text-white p-2">
+          </button> */}
+          {/* <button className="text-slate-500 hover:text-white p-2">
             <HelpCircle className="size-5" />
-          </button>
+          </button> */}
         </div>
       </header>
 
       {/* Settings Bar (API Key) */}
-      {showSettings && (
-        <div className="px-6 py-3 border-b border-slate-800 bg-slate-900 flex items-center gap-4">
+      { 
+      (
+        <div className="px-6 py-3 border-b border-slate-800 bg-slate-900 flex items-center gap-4" style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
           <KeyRound className="size-5 text-slate-500" />
-          <input 
-            type="password" 
-            placeholder="Paste your Gemini API Key here (Free tier works)..." 
-            value={apiKey} 
-            onChange={(e) => setApiKey(e.target.value)}
-            className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-base font-mono w-full focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition"
-          />
+          {!apiKey || editingKey ? (
+            <>
+              <input
+                type="password"
+                placeholder="Paste your Gemini API Key here (Free tier works)..."
+                value={tempKey}
+                onChange={(e) => setTempKey(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') saveApiKey(); }}
+                className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-base font-mono w-full focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition"
+              />
+              <button onClick={saveApiKey} className="text-indigo-400 px-3 py-2 rounded-md">Save</button>
+              <button 
+                onClick={() => {
+                setEditingKey(false);
+                setTempKey(''); 
+                }} 
+                className="text-slate-500 px-3 py-2">
+                  Close
+              </button>
+            </>
+          ) : (
+            <div className="flex flex-col gap-3 w-full">
+              <div className="flex flex-row items-center gap-3 w-full">
+                <div className="flex-1 text-sm text-slate-300">Key saved ••••{apiKey.slice(-4)}</div>
+              </div>
+            
+              <div className="flex flex-row items-center justify-start gap-4 w-full">
+                <button onClick={() => { setEditingKey(true); setTempKey(apiKey); }} className="text-indigo-400 px-4 py-2 rounded-md hover:bg-slate-800 flex-shrink-0" style={{marginRight: "10px"}}>Edit</button>
+                <button onClick={() => { setApiKey(''); try { localStorage.removeItem('gemini_api_key'); } catch {} setModelNotice('API key cleared'); setTimeout(() => setModelNotice(''), 3000); }} className="text-slate-500 px-4 py-2 rounded-md hover:bg-slate-800 flex-shrink-0">Clear</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Main Workspace: Split Editor Panel */}
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex overflow-hidden" style={{marginTop: "20px"}}>
         
         {/* Left Side: Prompt A Workspace */}
         <section className="w-1/2 border-r border-slate-800 flex flex-col">
           <div className="flex items-center justify-between px-6 py-2 border-b border-slate-800">
             <h2 className="text-sm font-semibold tracking-wide text-indigo-400 uppercase">PROMPT VERSION A</h2>
-            <div className="flex gap-1 text-xs text-slate-600">Gemini-1.5-Flash</div>
           </div>
           <textarea 
             value={promptA} 
@@ -159,7 +208,6 @@ export default function App() {
         <section className="w-1/2 flex flex-col">
           <div className="flex items-center justify-between px-6 py-2 border-b border-slate-800">
             <h2 className="text-sm font-semibold tracking-wide text-indigo-400 uppercase">PROMPT VERSION B (Challenger)</h2>
-            <div className="flex gap-1 text-xs text-slate-600">Gemini-1.5-Flash</div>
           </div>
           <textarea 
             value={promptB} 
